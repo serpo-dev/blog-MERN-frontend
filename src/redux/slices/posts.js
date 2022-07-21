@@ -12,6 +12,10 @@ export const fetchTags = createAsyncThunk('posts/fetchTags', async () => {
     return data;
 });
 
+export const fetchRemovePost = createAsyncThunk('posts/fetchRemovePost', (id) => {
+    axios.delete(`/posts/${id}`);
+});
+
 const initialState = {
     posts: {
         items: [],
@@ -28,6 +32,9 @@ const postsSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers: {
+
+        // получение постов
+
         [fetchPosts.pending]: (state) => {
             state.posts.items = [];
             state.posts.status = 'loading';
@@ -40,6 +47,9 @@ const postsSlice = createSlice({
             state.posts.items = [];
             state.posts.status = 'error';
         },
+
+        // получение тегов
+
         [fetchTags.pending]: (state) => {
             state.tags.items = [];
             state.tags.status = 'loading';
@@ -51,6 +61,20 @@ const postsSlice = createSlice({
         [fetchTags.rejected]: (state) => {
             state.tags.items = [];
             state.tags.status = 'error';
+        },
+
+        // удаление статьи 
+
+        [fetchRemovePost.pending]: (state, action) => {
+
+            // удаление статьи из redux, не дожидаясь ответа. Типо ничего страшного, 
+            // что статья может не удалиться ) Не знаю, как сделать по другому
+
+            state.posts.items = state.posts.items.filter(obj => obj._id !== action.meta.arg);
+
+        },
+        [fetchRemovePost.rejected]: (state) => {
+            state.posts.status = 'error';
         }
     }
 });

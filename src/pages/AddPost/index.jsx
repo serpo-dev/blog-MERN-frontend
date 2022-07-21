@@ -46,7 +46,7 @@ export const AddPost = () => {
       setLoading(true);
       const fields = {
         title,
-        tags: tags.split(','),
+        tags: tags,
         text,
         imageUrl
       }

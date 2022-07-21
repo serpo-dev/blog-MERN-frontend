@@ -8,10 +8,11 @@ import 'easymde/dist/easymde.min.css';
 import styles from './AddPost.module.scss';
 import { useSelector } from 'react-redux';
 import { selectIsAuth } from '../../redux/slices/auth';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import axios from '../../axios';
 
 export const AddPost = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const isAuth = useSelector(selectIsAuth);
   const [isLoading, setLoading] = React.useState(false);
@@ -41,6 +42,8 @@ export const AddPost = () => {
     setText(text);
   }, []);
 
+  const isEditing = Boolean(id);
+
   const onSubmit = async () => {
     try {
       setLoading(true);
@@ -50,16 +53,33 @@ export const AddPost = () => {
         text,
         imageUrl
       }
-      const { data } = await axios.post('/posts', fields);
-      const id = data._id;
 
-      navigate(`/posts/${id}`);
+      const { data } =  (isEditing
+        ? await axios.patch(`/posts/${id}`, fields)
+        : await axios.post('/posts', fields));
+
+      const _id = (isEditing
+        ? id
+        : data._id);
+
+      navigate(`/posts/${_id}`);
 
     } catch (e) {
       console.warn(e);
       console.log('Не удалось отправить запрос на сервер о публикации поста')
     }
   };
+
+  React.useEffect(() => {
+    if (id) {
+      axios.get(`/posts/${id}`).then(({ data }) => {
+        setTitle(data.title);
+        setText(data.text);
+        setImageUrl(data.imageUrl);
+        setTags(data.tags.join(','));
+      })
+    }
+  }, []);
 
   const options = React.useMemo(
     () => ({
@@ -122,7 +142,7 @@ export const AddPost = () => {
       <SimpleMDE className={styles.editor} value={text} onChange={onChange} options={options} />
       <div className={styles.buttons}>
         <Button onClick={onSubmit} size="large" variant="contained">
-          Опубликовать
+          {isEditing ? 'Сохранить' : 'Опубликовать'}
         </Button>
         <a href="/">
           <Button size="large">Отмена</Button>
